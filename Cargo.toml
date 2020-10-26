@@ -1,5 +1,5 @@
 [package]
-name = "hello_cargo"
+name = "Web_traffic_tracker"
 version = "0.1.0"
 authors = ["jBosak <jbosak98@gmail.com>"]
 edition = "2018"
@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 pcap = "0.7.0"
 argparse = "0.2.2"
+amiquip = "0.2.2"
