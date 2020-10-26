@@ -2,6 +2,7 @@ extern crate pcap;
 extern crate argparse;
 
 use pcap::{Capture, Device, Active, Savefile, Error};
+use amiquip::{Connection, Exchange, Publish, Result as RMQResult};
 
 fn load_device<'a>(target:&str, requested_device:&'a mut Device, devices: &'a Result<Vec<Device>,Error>){
     match devices {
@@ -25,18 +26,10 @@ fn load_device<'a>(target:&str, requested_device:&'a mut Device, devices: &'a Re
     println!("\ndetected target device: {}", requested_device.name);
 }
 
-fn get_file_to_save(filename:&str, capture:&Capture<Active>) -> Savefile {
-    match capture.savefile(filename) {
-        Ok(f) => f,
-        Err(_) => {
-            println!("error");
-            std::process::exit(1)
-        }
-    }
-}
-
 fn main() {
     let target = "wlp3s0";
+    let rabbit_url = "amqp://rmq:rmq@127.0.0.1:5672/%2f";
+
     let devices = Device::list();
     let mut requested_device : Device = Device::lookup().unwrap();
     load_device(&target, &mut requested_device, &devices);
@@ -46,10 +39,16 @@ fn main() {
         .open()
         .unwrap();
 
-    let mut file = get_file_to_save("./results.pcap", &capture);
+    let mut connection =
+        Connection::insecure_open(rabbit_url).unwrap();
+    let channel = connection.open_channel(None).unwrap();
+    let exchange = Exchange::direct(&channel);
 
     while let Ok(packet) = capture.next() {
+        exchange.publish(Publish::new(&packet, "network_traffic")).unwrap();
         println!("next");
-        file.write(&packet);
     }
+
+    connection.close();
+
 }
