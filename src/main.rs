@@ -1,10 +1,15 @@
-extern crate pcap;
-extern crate argparse;
+use pcap::{
+    Capture,
+    Device,
+    Error as PcapError
+};
+use amiquip::{
+    Connection,
+    Exchange,
+    Publish
+};
 
-use pcap::{Capture, Device, Active, Savefile, Error};
-use amiquip::{Connection, Exchange, Publish, Result as RMQResult};
-
-fn load_device<'a>(target:&str, requested_device:&'a mut Device, devices: &'a Result<Vec<Device>,Error>){
+fn load_device<'a>(target:&str, requested_device:&'a mut Device, devices: &'a Result<Vec<Device>,PcapError>){
     match devices {
         Ok(vector_devices) => {
             for device in vector_devices {
@@ -31,7 +36,7 @@ fn main() {
     let rabbit_url = "amqp://rmq:rmq@127.0.0.1:5672/%2f";
 
     let devices = Device::list();
-    let mut requested_device : Device = Device::lookup().unwrap();
+    let mut requested_device: Device = Device::lookup().unwrap();
     load_device(&target, &mut requested_device, &devices);
 
     let mut capture = Capture::from_device(requested_device)
@@ -46,9 +51,7 @@ fn main() {
 
     while let Ok(packet) = capture.next() {
         exchange.publish(Publish::new(&packet, "network_traffic")).unwrap();
-        println!("next");
     }
 
     connection.close();
-
 }
