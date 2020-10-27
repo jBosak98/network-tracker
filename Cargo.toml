@@ -1,5 +1,5 @@
 [package]
-name = "Web_traffic_tracker"
+name = "web_traffic_tracker"
 version = "0.1.0"
 authors = ["jBosak <jbosak98@gmail.com>"]
 edition = "2018"
