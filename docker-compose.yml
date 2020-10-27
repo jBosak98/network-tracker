@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  rabbit:
+    image: rabbitmq:3.8.4-management
+    network_mode: "host"
+    #    ports:
+    #      - "5672:5672"
+    #      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rmq
+      - RABBITMQ_DEFAULT_PASS=rmq
+  network-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+     - rabbit
+    network_mode: "host"
+    restart: on-failure:20
+
+
+
