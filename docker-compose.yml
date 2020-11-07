@@ -17,6 +17,14 @@ services:
      - rabbit
     network_mode: "host"
     restart: on-failure:20
+  consumer:
+    build:
+      context: ./rmq-consumer
+      dockerfile: Dockerfile
+    network_mode: "host"
+    restart: on-failure:20
+    depends_on:
+      - network-tracker
 
 
 
