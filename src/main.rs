@@ -1,13 +1,5 @@
-use pcap::{
-    Capture,
-    Device,
-    Error as PcapError
-};
-use amiquip::{
-    Connection,
-    Exchange,
-    Publish
-};
+use pcap::{Capture, Device, Error as PcapError, Packet};
+use amiquip::{ExchangeDeclareOptions, Connection, Publish, QueueDeclareOptions, ExchangeType, FieldTable};
 
 fn load_device<'a>(target:&str, requested_device:&'a mut Device, devices: &'a Result<Vec<Device>,PcapError>){
     match devices {
@@ -47,10 +39,27 @@ fn main() {
     let mut connection =
         Connection::insecure_open(rabbit_url).unwrap();
     let channel = connection.open_channel(None).unwrap();
-    let exchange = Exchange::direct(&channel);
+    let queue= channel.queue_declare(
+        "hello_queue",
+        QueueDeclareOptions::default())
+        .unwrap();
+    let exchange = channel.exchange_declare(
+        ExchangeType::Direct,
+        "hello_exchange",
+        ExchangeDeclareOptions::default()
+    ).unwrap();
+
+    channel.queue_bind(
+        queue.name(),
+        exchange.name(),
+        "network_traffic",
+        FieldTable::new()
+    );
+    println!("channel id: {}", channel.channel_id());
 
     while let Ok(packet) = capture.next() {
-        exchange.publish(Publish::new(&packet, "network_traffic")).unwrap();
+        let message = Publish::new(&packet.to_vec(), "network_traffic");
+        exchange.publish(message).unwrap();
     }
 
     connection.close();
